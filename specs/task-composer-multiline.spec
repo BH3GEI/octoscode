@@ -21,6 +21,11 @@ Vim 模式是独立的后续任务，不在本期。
   的终端）；否则普通 Enter 无法区分会发送，故 `Ctrl+J` 作可移植兜底。`Alt(Option)+Enter`
   在以 `Enter+ALT` 上报的终端（如 iTerm2）有效；Warp 把 Option+Enter 发成 `ESC+CR`、接不住。
   插入逻辑复用既有 `insert_composer_text`。
+- **请求 Kitty 键盘协议**：启动时若终端应答协议查询（Ghostty、kitty、WezTerm、Makepad
+  终端等），推入 disambiguate 级别（`CSI > 1 u`），`Shift+Enter` 由此以 `Enter+SHIFT` 到达；
+  不应答的终端（Terminal.app、未透传的 tmux）保持旧编码，不收到任何协议字节。凡交还终端
+  的路径（退出、panic、SIGTSTP 挂起、本地 shell 交接）都在离开 raw 模式前恰好弹出一次
+  （`CSI < 1 u`），恢复时再推入。`OCTOSCODE_LEGACY_KEYBOARD=1` 可关闭。
 - **Enter 语义不变**：普通 `Enter` 仍发送（`handle_composer_enter`），保留现有习惯；
   "粘贴多行"启发式 `should_insert_unbracketed_paste_newline` 不回归。
 - **上下行光标移动**：新增 `move_composer_cursor_up` / `move_composer_cursor_down`
@@ -67,6 +72,18 @@ Vim 模式是独立的后续任务，不在本期。
   当 用户按下 Shift+Enter
   那么 composer 文本变为 "ab\n"
   并且 不产生发送动作（不调用 turn/start）
+
+场景: 支持协议的终端被请求 disambiguate 级别，推入与弹出各恰好一次
+  测试: keyboard_enhancement_pushes_once_and_pops_once
+  假设 终端应答 Kitty 键盘协议查询
+  当 启动时推入、随后任意次重复推入与弹出
+  那么 终端恰好收到一次 `CSI > 1 u` 与一次 `CSI < 1 u`
+
+场景: 不支持协议的终端收不到任何协议字节
+  测试: keyboard_enhancement_stays_off_when_unsupported_or_never_pushed
+  假设 终端不应答协议查询（或已用 OCTOSCODE_LEGACY_KEYBOARD 关闭）
+  当 启动与退出路径各执行一次
+  那么 终端输出中没有任何协议字节
 
 场景: Alt+Enter 在以 Enter+ALT 上报的终端插入换行
   测试: alt_enter_inserts_newline_without_submitting
