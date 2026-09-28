@@ -6564,6 +6564,14 @@ fn mock_approval_tool_name(kind: &str) -> &'static str {
     }
 }
 
+/// Workspace root shown in mock approval details: the current directory,
+/// so no fixed machine path is compiled into the binary.
+fn mock_workspace_root() -> String {
+    std::env::current_dir()
+        .map(|p| p.display().to_string())
+        .unwrap_or_else(|_| ".".into())
+}
+
 fn mock_approval_title(kind: &str) -> &'static str {
     match kind {
         approval_kinds::DIFF => "Mock diff approval boundary",
@@ -6621,7 +6629,7 @@ fn mock_approval_details(kind: &str) -> ApprovalTypedDetails {
                 operation: "write".into(),
                 paths: vec!["/tmp/octos-mock-approval.txt".into()],
                 outside_workspace: true,
-                writable_roots: vec!["/Users/yuechen/home/octos".into()],
+                writable_roots: vec![mock_workspace_root()],
             }),
             network: None,
             sandbox_escalation: None,
@@ -6680,7 +6688,7 @@ fn mock_approval_details(kind: &str) -> ApprovalTypedDetails {
                 mode: Some("workspace-write".into()),
                 filesystem_access: Some("workspace-write".into()),
                 network_access: Some(false),
-                writable_roots: vec!["/Users/yuechen/home/octos".into()],
+                writable_roots: vec![mock_workspace_root()],
             }),
         ),
     }
