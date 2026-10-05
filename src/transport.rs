@@ -11678,6 +11678,10 @@ mod tests {
                     );
                     saw_reconnect = true;
                 }
+            } else {
+                // Keep iterations paced while waiting for the disconnect
+                // status; recv_timeout no longer provides the 50ms pause.
+                thread::sleep(Duration::from_millis(50));
             }
         }
         assert!(
