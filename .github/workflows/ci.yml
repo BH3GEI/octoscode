@@ -10,7 +10,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main]
+    branches: [main, verify/672-windows-ci]
 
 # A force-push supersedes the previous run; don't pay for both.
 concurrency:
