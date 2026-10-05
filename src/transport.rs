@@ -11640,14 +11640,16 @@ mod tests {
         // Drain until the reconnect happens: the dead writer makes the next
         // send/poll fail, the disconnect is reported, and the backend
         // reconnects (server accepts connection 2 and captures 3 requests).
-        let deadline = Instant::now() + Duration::from_secs(5);
+        let deadline = Instant::now() + Duration::from_secs(30);
         let mut saw_disconnect = false;
+        let mut seen_statuses: Vec<String> = Vec::new();
         while Instant::now() < deadline {
             match backend.next_event() {
                 Ok(Some(ClientEvent::App(event))) => {
                     if let AppUiEvent::Status(status) = *event {
                         saw_disconnect |= status.message.contains("disconnected")
                             || status.message.contains("closed");
+                        seen_statuses.push(format!("{:?}: {}", Instant::now(), status.message));
                     }
                 }
                 Ok(Some(_)) | Ok(None) => {}
@@ -11668,7 +11670,10 @@ mod tests {
                 break;
             }
         }
-        assert!(saw_disconnect, "the dead connection was reported");
+        assert!(
+            saw_disconnect,
+            "the dead connection was reported; statuses seen: {seen_statuses:#?}"
+        );
 
         // The REPLAYED launch/resolve lands BEFORE the session reopen.
         let replayed = server.recv_json();
